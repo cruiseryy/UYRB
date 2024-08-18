@@ -32,7 +32,7 @@ class parallel_coords:
             if self.mins[i] < 0:
                 botlabels[i] = botlabels[i][1:]
        
-        cmap = matplotlib.cm.get_cmap(cmap)
+        cmap = matplotlib.colormaps[cmap]
         scaled = np.zeros(data.shape)
         for j in range(data.shape[1]):
             scaled[:, j] = (data[:, j] - self.mins[j]) / (self.maxs[j] - self.mins[j])
@@ -47,7 +47,7 @@ class parallel_coords:
         xs = np.arange(data.shape[1])
         for i in range(data.shape[0]):
             ys = scaled[i, :]
-            ax.plot(xs, ys, c=cmap(0.2+0.7*shading[i]), linewidth=2, alpha = 0.25)
+            ax.plot(xs, ys, c=cmap(0.2+0.7*shading[i]), linewidth=2, alpha = 0.2)
 
         # min_dev_idx = np.argmax(dev)
         # ax.plot(xs, scaled[min_dev_idx, :], c=cmap(0.9), linewidth=4)
@@ -74,8 +74,9 @@ class parallel_coords:
 
         return 
     
-    def plot_single_traj(self, ax, single_obj, color):
+    def plot_single_traj(self, ax, single_obj, cmap):
+        cmap = matplotlib.colormaps[cmap]
         single_obj_scaled = (single_obj - self.mins)/(self.maxs - self.mins)
         xs = np.arange(len(single_obj))
-        ax.plot(xs, single_obj_scaled, c=color, linewidth=4)
+        ax.plot(xs, single_obj_scaled, c=cmap(0.1), linewidth=4)
         return

@@ -15,7 +15,7 @@ obj1 = tdata1(:,end-3:end);
 
 % create a set of altered flow conditions
 % the amplification factors range from [1, 5] and are sampled using LHS
-n = 100;
+n = 1000;
 af = 1 + repmat([4 4],n,1) .* lhsdesign(n,2); 
 
 % Representative policies are selected to mimic actual operations
@@ -75,3 +75,18 @@ grid
 xlabel('inflow amplification factor')
 ylabel('latflow amplification factor')
 title('(c) Difference')
+
+[corr(reliability(:,1),af(:,1)), corr(reliability(:,1),af(:,2))]
+[corr(reliability(:,2),af(:,1)), corr(reliability(:,2),af(:,2))]
+[corr(reliability(:,1)-reliability(:,2),af(:,1)), corr(reliability(:,1)-reliability(:,2),af(:,2))]
+
+writematrix(af, 'figures/LHS_af.csv')
+writematrix(reliability, 'figures/robustness.csv')
+
+% the dps1 reliability as well as the reliability diff are negatively and
+% positively correlated with latflow af, both being satistically
+% significant while the dps0 reliability show no correlation with the
+% latflow af. Note that latflow only plays a very small portion here!!!
+% also, the reliability diff highly positively correlated with inflow AF,
+% indicating that in more altered worlds, the high-quality inflow forecasts
+% play more important roles!

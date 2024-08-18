@@ -66,4 +66,4 @@ for y = 1:9
     min_hp(y) = min(tmp_hp);
 end
 
-his_obj = [tot_hp' min_hp' water_deficit storage_penalty'];
+his_obj = [tot_hp' min_hp' water_deficit storage_penalty']

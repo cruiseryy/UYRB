@@ -29,6 +29,14 @@ end
 load('his_obj.mat')
 hobj = mean(his_obj);
 
+% write the objs for later visualization
+wobj0 = obj0 .* [-1, -1, 1, -1];
+wobj1 = obj1 .* [-1, -1, 1, -1];
+whobj = hobj .* [-1, -1, 1, -1];
+writematrix(wobj0, 'figures/his_obj_dps0.csv')
+writematrix(wobj1, 'figures/his_obj_dps1.csv')
+writematrix(whobj, 'figures/his_obj_actual.csv')
+
 % flip obj3 (water deficit) to align the preference directions across objs
 obj0(:,3) = 1 - obj0(:,3);
 obj1(:,3) = 1 - obj1(:,3); 
@@ -93,6 +101,16 @@ for k = 1:4
     idx_others1(k) = find(obj1(:,k) == min(obj1(:,k)));
 end
 
+% to save the trajectories for plotting using python
+lyx_outflow0 = [];
+ljx_outflow0 = [];
+lyx_storage0 = []; 
+ljx_storage0 = [];
+lyx_outflow1 = [];
+ljx_outflow1 = [];
+lyx_storage1 = []; 
+ljx_storage1 = [];
+
 % compare the trajs
 load('flow_data_new.mat')
 figure()
@@ -106,10 +124,17 @@ for k = 1:4
     tplot.Color(4) = 0.15;
     tplot = plot(tmp_o1, 'b-','LineWidth',2);
     tplot.Color(4) = 0.15;
+    [k, corr(tmp_o0,lyx_out), corr(tmp_o1,lyx_out)]
+    
+    lyx_outflow0 = [lyx_outflow0, tmp_o0];
+    lyx_outflow1 = [lyx_outflow1, tmp_o1];
 end 
 plot(dps_lyx_o0, 'r-','LineWidth',2)
 plot(dps_lyx_o1, 'b-','LineWidth',2)
 plot(lyx_out, 'k-', 'LineWidth',2)
+[5, corr(dps_lyx_o0,lyx_out), corr(dps_lyx_o1,lyx_out)]
+lyx_outflow0 = [lyx_outflow0, dps_lyx_o0, lyx_out];
+lyx_outflow1 = [lyx_outflow1, dps_lyx_o1, lyx_out];
 
 subplot(3,1,2)
 hold on
@@ -121,10 +146,17 @@ for k = 1:4
     tplot.Color(4) = 0.15;
     tplot = plot(tmp_o1, 'b-','LineWidth',2);
     tplot.Color(4) = 0.15;
+    [k, corr(tmp_o0,ljx_out), corr(tmp_o1,ljx_out)]
+
+    ljx_outflow0 = [ljx_outflow0, tmp_o0];
+    ljx_outflow1 = [ljx_outflow1, tmp_o1];
 end 
 plot(dps_ljx_o0, 'r-','LineWidth',2)
 plot(dps_ljx_o1, 'b-','LineWidth',2)
 plot(ljx_out, 'k-', 'LineWidth',2)
+[5, corr(dps_ljx_o0,ljx_out), corr(dps_ljx_o1,ljx_out)]
+ljx_outflow0 = [ljx_outflow0, dps_ljx_o0, ljx_out];
+ljx_outflow1 = [ljx_outflow1, dps_ljx_o1, ljx_out];
 
 subplot(3,1,3)
 hold on
@@ -138,10 +170,38 @@ for k = 1:4
     tplot.Color(4) = 0.15;
     tplot = plot(tmp_s1, 'b-','LineWidth',2);
     tplot.Color(4) = 0.15;
+    [k, corr(tmp_s0,lyx_s'+ljx_s'), corr(tmp_s1,lyx_s'+ljx_s')]
+
+    lyx_storage0 = [lyx_storage0, tmp_s10];
+    ljx_storage0 = [ljx_storage0, tmp_s20];
+    lyx_storage1 = [lyx_storage1, tmp_s11];
+    ljx_storage1 = [ljx_storage1, tmp_s21];
 end 
 plot(dps_lyx_s0 + dps_ljx_s0, 'r-','LineWidth',2)
 plot(dps_lyx_s1 + dps_ljx_s1, 'b-','LineWidth',2)
 plot(lyx_s + ljx_s, 'k-', 'LineWidth',2)
+[5, corr(dps_lyx_s0+dps_ljx_s0,lyx_s'+ljx_s'), corr(dps_lyx_s1+dps_ljx_s1,lyx_s'+ljx_s')]
+lyx_storage0 = [lyx_storage0, dps_lyx_s0, lyx_s'];
+ljx_storage0 = [ljx_storage0, dps_ljx_s0, ljx_s'];
+lyx_storage1 = [lyx_storage1, dps_lyx_s1, lyx_s'];
+ljx_storage1 = [ljx_storage1, dps_ljx_s1, ljx_s'];
+
+writematrix(lyx_outflow0, 'figures/lyx_outflow0.csv')
+writematrix(lyx_outflow1, 'figures/lyx_outflow1.csv')
+writematrix(ljx_outflow0, 'figures/ljx_outflow0.csv')
+writematrix(ljx_outflow1, 'figures/ljx_outflow1.csv')
+writematrix(lyx_storage0, 'figures/lyx_storage0.csv')
+writematrix(lyx_storage1, 'figures/lyx_storage1.csv')
+writematrix(ljx_storage0, 'figures/ljx_storage0.csv')
+writematrix(ljx_storage1, 'figures/ljx_storage1.csv')
+
+
+% The representative policies minimzing the 2nd obj share relatively 
+% better similarity (measured by Pearson's CC) with the historical
+% actual operations compared to other representative policies. But overall
+% they are beaten by the preference-preserving policies selected with our
+% framework.
+
 
 
 

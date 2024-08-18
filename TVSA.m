@@ -1,10 +1,10 @@
 clear;clc;
+close all;
 
 addpath('utils_matlab');
 addpath('data_matlab');
 
 rng(0)
-
 % load parameters
 load('paras.mat');
 
@@ -61,12 +61,13 @@ Wp1 = Wp1/sum(Wp1);
 Wp2 = Wp2/sum(Wp2);
 Rp = 10*Rp;
 
-% 100 samples (SOWs) are used to estimate the variances and their components
-xx = zeros(100,5,36); % sampled-based variance estimates of inputs
-yy = zeros(100,2,36); % sampled-based variance estimates of inputs
-tmpobj = zeros(100,4);
+NN = 1000;
+% NN samples (SOWs) are used to estimate the variances and their components
+xx = zeros(NN,5,36); % sampled-based variance estimates of inputs
+yy = zeros(NN,2,36); % sampled-based variance estimates of inputs
+tmpobj = zeros(NN,4);
 
-for k = 1:100
+for k = 1:NN
     tmp_idx = randi(20000);
     tinf = inf_pool(tmp_idx,:);
     tlat = lat_pool(tmp_idx,:);
@@ -142,9 +143,9 @@ for k = 1:36
         for l = 1:5
             tmp_cov = cov(xx(:,m,k),xx(:,l,k));
             tmp_cov = tmp_cov(2);
-            for si = 1:100
-                var_comp_lyx(m,l,k) = var_comp_lyx(m,l,k) + 1/100*RBF_derivative(xx(i,:,k),Cp,Rp,Wp1,m)*RBF_derivative(xx(i,:,k),Cp,Rp,Wp1,l)*tmp_cov;
-                var_comp_ljx(m,l,k) = var_comp_ljx(m,l,k) + 1/100*RBF_derivative(xx(i,:,k),Cp,Rp,Wp2,m)*RBF_derivative(xx(i,:,k),Cp,Rp,Wp2,l)*tmp_cov;
+            for si = 1:NN
+                var_comp_lyx(m,l,k) = var_comp_lyx(m,l,k) + 1/NN*RBF_derivative(xx(i,:,k),Cp,Rp,Wp1,m)*RBF_derivative(xx(i,:,k),Cp,Rp,Wp1,l)*tmp_cov;
+                var_comp_ljx(m,l,k) = var_comp_ljx(m,l,k) + 1/NN*RBF_derivative(xx(i,:,k),Cp,Rp,Wp2,m)*RBF_derivative(xx(i,:,k),Cp,Rp,Wp2,l)*tmp_cov;
             end
         end
     end
@@ -156,11 +157,11 @@ end
 % ONLY NOT statistically significant for LJX release decisions with perfect
 % inflow data. This is largely due to ONE outlier (index = 20), and R^2 is
 % improved to > 0.8 when the outlier is removed. 
-yy1 = reshape(yy(:,1,:),100,36);
+yy1 = reshape(yy(:,1,:),NN,36);
 yyvar1 = squeeze(var(yy1,[],1));
 re_yyvar1 = squeeze(sum(var_comp_lyx, [1,2]));
 [b1,~,~,~,stats1] = regress(yyvar1',[ones(36,1), re_yyvar1])
-yy2 = reshape(yy(:,2,:),100,36);
+yy2 = reshape(yy(:,2,:),NN,36);
 yyvar2 = squeeze(var(yy2,[],1));
 re_yyvar2 = squeeze(sum(var_comp_ljx, [1,2]));
 [b2,~,~,~,stats2] = regress(yyvar2',[ones(36,1), re_yyvar2])
@@ -184,8 +185,8 @@ ljx_var = zeros(5, 36);
 
 tmark = 1;
 for k = 1:4
-    lyx_var(tmark,:) = var_comp_lyx(tmark,tmark,:);
-    ljx_var(tmark,:) = var_comp_ljx(tmark,tmark,:);
+    lyx_var(k,:) = var_comp_lyx(tmark,tmark,:);
+    ljx_var(k,:) = var_comp_ljx(tmark,tmark,:);
     tmark = tmark + 1;
     % skip the ToY
     if tmark == 3
@@ -215,72 +216,76 @@ ljx_inter(4,:) = var_comp_ljx(5,1,:); % Lat - LYX storage
 ljx_inter(5,:) = var_comp_ljx(5,2,:); % Lat - LJX storage
 
 % a simple visualization to examine the decomposition results
-tmpvar = lyx_inter;
+tmpvar = lyx_var;
 figure(11)
 subplot(2,1,type+1)
 hold on 
 for k = 1:36
     tmpmark = 0;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(1,k) tmpvar(1,k) 0 0],'g','EdgeColor','g'); % S1*S1
+    total_height = sum(tmpvar(:,k)); 
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(1,k) tmpvar(1,k) 0 0]/total_height,'g','EdgeColor','g'); % S1*S1
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(1,k);
+    tmpmark = tmpmark + tmpvar(1,k)/total_height;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(2,k) tmpvar(2,k) 0 0],'m','EdgeColor','m'); % S2*S2
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(2,k) tmpvar(2,k) 0 0]/total_height,'m','EdgeColor','m'); % S2*S2
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(2,k);
+    tmpmark = tmpmark + tmpvar(2,k)/total_height;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(3,k) tmpvar(3,k) 0 0],'r','EdgeColor','r'); % I*I
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(3,k) tmpvar(3,k) 0 0]/total_height,'r','EdgeColor','r'); % I*I
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(3,k);
+    tmpmark = tmpmark + tmpvar(3,k)/total_height;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(4,k) tmpvar(4,k) 0 0],'b','EdgeColor','b'); % L*L
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(4,k) tmpvar(4,k) 0 0]/total_height,'b','EdgeColor','b'); % L*L
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(4,k);
+    tmpmark = tmpmark + tmpvar(4,k)/total_height;
     
-    plot(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark + [0 tmpvar(5,k) tmpvar(5,k) 0 0],'k--')  %interaction
-    tmpmark = tmpmark + tmpvar(5,k);
+    plot(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark + [0 tmpvar(5,k) tmpvar(5,k) 0 0]/total_height,'k--')  %interaction
 
     [k, tmpvar(2,k)/tmpmark]
 end 
 grid
 
 
-tmpvar = ljx_inter;
+tmpvar = ljx_var;
 figure(12)
 subplot(2,1,type+1)
 hold on 
 for k = 1:36
     tmpmark = 0;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(1,k) tmpvar(1,k) 0 0],'g','EdgeColor','g');
+    total_height = sum(tmpvar(:,k)); 
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(1,k) tmpvar(1,k) 0 0]/total_height,'g','EdgeColor','g'); % S1*S1
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(1,k);
+    tmpmark = tmpmark + tmpvar(1,k)/total_height;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(2,k) tmpvar(2,k) 0 0],'m','EdgeColor','m');
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(2,k) tmpvar(2,k) 0 0]/total_height,'m','EdgeColor','m'); % S2*S2
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(2,k);
+    tmpmark = tmpmark + tmpvar(2,k)/total_height;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(3,k) tmpvar(3,k) 0 0],'r','EdgeColor','r');
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(3,k) tmpvar(3,k) 0 0]/total_height,'r','EdgeColor','r'); % I*I
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(3,k);
+    tmpmark = tmpmark + tmpvar(3,k)/total_height;
     
-    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(4,k) tmpvar(4,k) 0 0],'b','EdgeColor','b');
+    tplot = fill(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark+[0 tmpvar(4,k) tmpvar(4,k) 0 0]/total_height,'b','EdgeColor','b'); % L*L
     tplor.Color(4) = 0.4;
-    tmpmark = tmpmark + tmpvar(4,k);
+    tmpmark = tmpmark + tmpvar(4,k)/total_height;
     
-    plot(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark + [0 tmpvar(5,k) tmpvar(5,k) 0 0],'k--')  %interaction
-    tmpmark = tmpmark + tmpvar(5,k);
+    plot(k+[-0.25 -0.25 0.25 0.25 -0.25],tmpmark + [0 tmpvar(5,k) tmpvar(5,k) 0 0]/total_height,'k--')  %interaction
 
     [k, tmpvar(2,k)/tmpmark]
 end 
 grid
 
+write_lyx = [];
+write_ljx = [];
+for i = 1:36
+    write_lyx = [write_lyx, var_comp_lyx(:,:,i)];
+    write_ljx = [write_ljx, var_comp_ljx(:,:,i)];
+end
 
-
-
-
-
+writematrix(write_lyx, strcat('figures/var_comp_lyx', num2str(type)))
+writematrix(write_ljx, strcat('figures/var_comp_ljx', num2str(type)))
 
 
 
