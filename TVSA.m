@@ -32,7 +32,7 @@ Rp = zeros(1,na*nb);
 Wp1 = zeros(1,na); Wp2 = zeros(1,na);
 
 % select a DPS policy for 
-type = 1;
+type = 0;
 if type == 0
     policy = policy0(idx0, :);
 else
