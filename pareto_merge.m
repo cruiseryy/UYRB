@@ -7,7 +7,7 @@ hobj = importdata('his_obj_actual.csv');
 cnt0 = 0;
 for i = 1:size(obj0, 1)
     cnt = sum(obj0(i,:) < hobj);
-    if cnt == 4
+    if cnt == 0
         cnt0 = cnt0 + 1;
     end
 end
@@ -15,10 +15,12 @@ end
 cnt1 = 0;
 for i = 1:size(obj1, 1)
     cnt = sum(obj1(i,:) < hobj);
-    if cnt == 4
+    if cnt == 0
         cnt1 = cnt1 + 1;
     end
 end
+
+pause = 1
 
 % tdata0 = importdata('re0.reference');
 % obj0 = tdata0(:,end-3:end);
