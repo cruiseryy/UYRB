@@ -30,6 +30,15 @@ obj_base = quantile(obj_all, 0.9) .* [-1, -1, 1, -1];
 
 reliability = zeros(n,2); 
 
+% % to estimate the robustness score under the base distribution
+% for k = 1:100
+%     tic
+%     bs0(k) = robust_func(policy0(idx0,:), 0, [1, 1], obj_base);
+%     bs1(k) = robust_func(policy1(idx1,:), 1, [1, 1], obj_base);
+%     toc
+% end
+% pause = 1
+
 for k = 1:n
     tic 
     tmpr0 = robust_func(policy0(idx0,:), 0, af(k,:), obj_base);
